@@ -1,0 +1,93 @@
+function doGet(e) {
+  return handleRequest(e);
+}
+
+function doPost(e) {
+  return handleRequest(e);
+}
+
+function handleRequest(e) {
+  try {
+    const qrData = e.parameter.qrData || (e.postData && JSON.parse(e.postData.getDataAsString()).qrData);
+    
+    if (!qrData) {
+      return ContentService.createTextOutput("ERROR: No QR data provided")
+        .setMimeType(ContentService.MimeType.TEXT);
+    }
+    
+    // Validate against sheet
+    const validationResult = validateQRCode(qrData);
+    
+    // Return response
+    const response = validationResult.valid ? 
+      `OK: ${validationResult.message}` : 
+      `NOT OK: ${validationResult.message}`;
+      
+    return ContentService.createTextOutput(response)
+      .setMimeType(ContentService.MimeType.TEXT);
+      
+  } catch (error) {
+    return ContentService.createTextOutput("ERROR: " + error.message)
+      .setMimeType(ContentService.MimeType.TEXT);
+  }
+}
+
+function validateQRCode(qrData) {
+  const sheetId = "15PsyX3zRx3_hFCcGygxrr_9WO60zFdBtuPQAdJ-3Dqw";
+  const sheet = SpreadsheetApp.openById(sheetId).getSheetByName("Form_Responses1");
+  
+  // Column letters (more reliable than indexes)
+  const EVENT_ID_COLUMN = "B"; // Column B contains event IDs
+  const STATUS_COLUMN = "C";   // Column C contains status
+  
+  try {
+    // Get all data in columns B and C only
+    const lastRow = sheet.getLastRow();
+    const range = sheet.getRange(`${EVENT_ID_COLUMN}2:${STATUS_COLUMN}${lastRow}`);
+    const data = range.getValues();
+    
+    // Search for the QR data
+    for (let i = 0; i < data.length; i++) {
+      const eventId = data[i][0]; // First column in range (B)
+      const currentStatus = data[i][1].toString().trim().toLowerCase(); // Second column (C)
+      
+      if (eventId === qrData) {
+        if (currentStatus === "no") {
+          // Update status to "yes" (i+2 because we started from row 2)
+          sheet.getRange(`${STATUS_COLUMN}${i+2}`).setValue("yes");
+          SpreadsheetApp.flush();
+          
+          return {
+            valid: true,
+            message: "Valid QR code - status updated to yes"
+          };
+        } else {
+          return {
+            valid: false,
+            message: "QR code already used"
+          };
+        }
+      }
+    }
+    
+    return {
+      valid: false,
+      message: "QR code not found in database"
+    };
+    
+  } catch (error) {
+    console.error("Error:", error);
+    return {
+      valid: false,
+      message: "Validation error: " + error.message
+    };
+  }
+}
+
+// Test function - run this in the script editor to verify
+function testValidation() {
+  const testQR = "EVENT-1001"; // Replace with actual code from your sheet
+  const result = validateQRCode(testQR);
+  console.log(result);
+  Logger.log(result);
+}
