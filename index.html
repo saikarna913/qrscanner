@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QR Code Scanner</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
 </head>
@@ -15,21 +16,23 @@
             <div class="video-container">
                 <video id="qr-video" playsinline></video>
                 <canvas id="qr-canvas" hidden></canvas>
+                
+                <div class="scan-overlay">
+                    <div class="scan-frame">
+                        <div class="scan-line"></div>
+                    </div>
+                    <div class="scan-result" id="scan-result"></div>
+                </div>
             </div>
+            
             <div class="controls">
                 <button id="start-button">Start Scanner</button>
                 <button id="stop-button" disabled>Stop Scanner</button>
-                <button onclick="testConnection()">Test Connection</button>
             </div>
-        </div>
-        
-        <div class="result-container">
-            <h2>Scan Result</h2>
-            <div id="scan-result">No QR code scanned yet</div>
-            <div id="server-response"></div>
+            
+            <div class="status-indicator" id="server-response"></div>
         </div>
     </div>
-
     <script src="main.js"></script>
 </body>
 </html>
